@@ -65,9 +65,25 @@ genera_report_grafico <- function(m_nb) {
   p3 <- ggplot(df_TT, aes(x = T_num, y = response, color = TR, group = TR)) +
     geom_line(linewidth = 1.1) + geom_point(size = 2) +
     theme_bw() + labs(title = "Interazione T x TR")
+  # --- NUOVO: Plot Trattamento x Distanza ---
+  # Calcoliamo le medie marginali per l'interazione spaziale
+  emm_TR_D <- emmeans(m_nb, ~ TR | D, type = "response")
+  df_TR_D <- as.data.frame(emm_TR_D)
+  
+  p4 <- ggplot(df_TR_D, aes(x = D, y = response, color = TR, group = TR)) +
+    geom_line(linewidth = 1) + 
+    geom_point(size = 3) +
+    geom_errorbar(aes(ymin = asymp.LCL, ymax = asymp.UCL), width = 0.2) +
+    theme_bw() + 
+    labs(title = "Interazione Trattamento x Distanza",
+         subtitle = "Analisi dell'effetto spaziale delle piante alternative",
+         x = "Distanza dalla fila alternativa (m)",
+         y = "N. atteso di anelli necrotici")
+   
   
   # Mostra i grafici
   print(p1)
   print(p2)
   print(p3)
+  print(p4)
 }
