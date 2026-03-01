@@ -4,10 +4,10 @@ carica_e_prepara_dati <- function(file, sheet, col_y, col_tr, col_plot, col_d, c
   raw <- read_excel(file, sheet = sheet)
   names(raw) <- trimws(names(raw))
   
-  # Controllo colonne
+  # Column check
   needed <- c(col_y, col_tr, col_plot, col_d, col_t, col_unit)
   missing <- setdiff(needed, names(raw))
-  if (length(missing) > 0) stop(paste("Mancano queste colonne:", paste(missing, collapse = ", ")))
+  if (length(missing) > 0) stop(paste("The following columns are missing:", paste(missing, collapse = ", ")))
   
   dat <- raw %>%
     transmute(
@@ -20,9 +20,9 @@ carica_e_prepara_dati <- function(file, sheet, col_y, col_tr, col_plot, col_d, c
     ) %>%
     filter(!is.na(Y))
   
-  if (any(dat$Y < 0)) stop("La risposta contiene valori negativi!")
+  if (any(dat$Y < 0)) stop("The response variable contains negative values!")
   
-  cat("\n--- Struttura dati ---\n")
+  cat("\n--- Data Structure ---\n")
   print(str(dat))
   return(dat)
 }
@@ -40,7 +40,7 @@ confronta_modelli <- function(dat_fit) {
   print(summary(m_nb))
   print(check_overdispersion(m_nb))
   
-  return(m_nb) # Restituiamo il NB che è quello che usi per i plot
+  return(m_nb) # Returning the NB model which is used for plotting
 }
 
 genera_report_grafico <- function(m_nb) {
@@ -48,14 +48,14 @@ genera_report_grafico <- function(m_nb) {
   emm_TR <- emmeans(m_nb, ~ TR, type = "response")
   p1 <- ggplot(as.data.frame(emm_TR), aes(x = TR, y = response)) +
     geom_point(size = 3) + geom_errorbar(aes(ymin = asymp.LCL, ymax = asymp.UCL), width = 0.2) +
-    theme_bw() + labs(title = "Plot TR")
+    theme_bw() + labs(title = "Treatment Plot")
   
   # T Plot
   emm_T <- emmeans(m_nb, ~ T, type = "response")
   p2 <- ggplot(as.data.frame(emm_T), aes(x = T, y = response, group = 1)) +
     geom_point(size = 3) + geom_line() +
     geom_errorbar(aes(ymin = asymp.LCL, ymax = asymp.UCL), width = 0.15) +
-    theme_bw() + labs(title = "Plot Tempo")
+    theme_bw() + labs(title = "Time Plot")
   
   # T x TR Plot
   emm_TR_T <- emmeans(m_nb, ~ TR | T, type = "response")
@@ -64,9 +64,10 @@ genera_report_grafico <- function(m_nb) {
   
   p3 <- ggplot(df_TT, aes(x = T_num, y = response, color = TR, group = TR)) +
     geom_line(linewidth = 1.1) + geom_point(size = 2) +
-    theme_bw() + labs(title = "Interazione T x TR")
-  # --- NUOVO: Plot Trattamento x Distanza ---
-  # Calcoliamo le medie marginali per l'interazione spaziale
+    theme_bw() + labs(title = "Time x Treatment Interaction")
+
+  # --- NEW: Treatment x Distance Plot ---
+  # Calculating marginal means for spatial interaction
   emm_TR_D <- emmeans(m_nb, ~ TR | D, type = "response")
   df_TR_D <- as.data.frame(emm_TR_D)
   
@@ -75,13 +76,13 @@ genera_report_grafico <- function(m_nb) {
     geom_point(size = 3) +
     geom_errorbar(aes(ymin = asymp.LCL, ymax = asymp.UCL), width = 0.2) +
     theme_bw() + 
-    labs(title = "Interazione Trattamento x Distanza",
-         subtitle = "Analisi dell'effetto spaziale delle piante alternative",
-         x = "Distanza dalla fila alternativa (m)",
-         y = "N. atteso di anelli necrotici")
+    labs(title = "Treatment x Distance Interaction",
+         subtitle = "Spatial effect analysis of alternative plants",
+         x = "Distance from alternative row (m)",
+         y = "Expected number of necrotic rings")
    
   
-  # Mostra i grafici
+  # Displaying plots
   print(p1)
   print(p2)
   print(p3)
